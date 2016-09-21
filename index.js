@@ -12,6 +12,7 @@ class GHProjectManager {
 
 		// If this becomes a dedicated Integration we'll replace 'User-Agent' with the application name
 		var header = {
+			// Required for projects as of now
 			'Accept': 'application/vnd.github.inertia-preview+json',
 			'User-Agent': this.credentials.username
 		};
@@ -25,28 +26,28 @@ class GHProjectManager {
 		this.cache = {};
 	}
 
-	GetProjects(owner, repo, debug = false) {
+	GetProjects(owner, repo, callback, errorCallback, debug = false) {
 		var options = _.clone(this.defaultOptions);
 		options.path = '/repos/'+owner+'/'+repo+'/projects';
 		options.method = 'GET';
 
-		this.Request(options, (r) => {console.log(r)}, () => {}, true);		
+		this.Request(options, callback, errorCallback, () => {}, true);		
 	}
 
-	GetColumns(owner, repo, projectID, debug = false) {
+	GetColumns(owner, repo, projectID, callback, errorCallback, debug = false) {
 		var options = _.clone(this.defaultOptions);
 		options.path = '/repos/'+owner+'/'+repo+'/projects/' + projectID + '/columns';
 		options.method = 'GET';
 
-		this.Request(options, (r) => {console.log(r)}, () => {}, debug);
+		this.Request(options, callback, errorCallback, debug);
 	}
 
-	GetCards(owner, repo, columnID, debug = false) {
+	GetCards(owner, repo, columnID, callback, errorCallback, debug = false) {
 		var options = _.clone(this.defaultOptions);
 		options.path = '/repos/'+owner+'/'+repo+'/projects/columns/'+columnID+'/cards';
 		options.method = 'GET';
 
-		this.Request(options, (r) => {console.log(r)}, () => {}, debug);
+		this.Request(options, callback, errorCallback, debug);
 	}
 
 	Request(options, callback, errorCallback, debug = false) {
@@ -61,6 +62,10 @@ class GHProjectManager {
 				console.log('headers:',res.headers);			
 			}
 
+			if (res.statusCode == 401) {
+				errorCallback(null, res.statusCode);
+			}
+
 			res.on('data', (d) => {
 				response += d;
 			});
@@ -69,14 +74,14 @@ class GHProjectManager {
 				if (debug) {
 					console.error(e);
 				}
-
-				errorCallback(e);
+				errorCallback(e, res.statusCode);
 			});
 
 			res.on('end', () => {
 				var key = options.path;
 
 				// @TODO Put this into it's own function, possibly make the cache itself its own object.
+				// Mainly since caches should only work with GET requests, nothing else.
 				if (res.statusCode == 200) {
 					var formattedResponse = JSON.parse(response);
 					var etag = res.headers.etag;
@@ -84,9 +89,9 @@ class GHProjectManager {
 						etag: etag,
 						value: formattedResponse
 					}
-					callback(formattedResponse);				
+					callback(formattedResponse, res.statusCode);				
 				} else if (res.statusCode == 304) {
-					callback(this.cache[key].value);
+					callback(this.cache[key].value, res.statusCode);
 				}
 			});
 		});
