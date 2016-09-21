@@ -4,7 +4,7 @@
   "description": "Manage your GH Projects!",
   "main": "index.js",
   "scripts": {
-    "test": "node testing"
+    "test": "npm install; node testing"
   },
   "author": "John Lee",
   "license": "ISC"
