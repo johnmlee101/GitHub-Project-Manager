@@ -29,11 +29,6 @@ function AssertCodeCallback(code, context = "") {
 	};
 }
 
-if (manager.credentials.username === 'user') {
-	console.log("Need to provide your own credentials!!!\n");
-	process.exit(1);
-}
-
 // Cache Testing
 function testCache() {
 	const context = "[testCache]";
