@@ -31,7 +31,7 @@ class GHProjectManager {
 		options.path = '/repos/'+owner+'/'+repo+'/projects';
 		options.method = 'GET';
 
-		this.Request(options, callback, errorCallback, () => {}, true);		
+		this.Request(options, callback, errorCallback, debug);		
 	}
 
 	GetColumns(owner, repo, projectID, callback, errorCallback, debug = false) {
@@ -48,6 +48,34 @@ class GHProjectManager {
 		options.method = 'GET';
 
 		this.Request(options, callback, errorCallback, debug);
+	}
+
+	GetIssues(owner, repo, callback, errorCallback, debug = false) {
+		var options = _.clone(this.defaultOptions);
+		options.path = '/repos/'+owner+'/'+repo+'/issues';
+		options.method = 'GET';
+
+		this.Request(options, callback, errorCallback, debug);
+	}
+
+	GetLabels(owner, repo, issueID, callback, errorCallback, debug = false) {
+		this.GetIssue(owner, repo, issueID, (issue, code) => {
+			callback(issue.labels, code);
+		}, errorCallback, debug)
+	}
+
+	GetIssue(owner, repo, issueID, callback, errorCallback, debug = false) {
+		this.GetIssues(owner, repo, (data, code) => {
+			let issueMatch = _.find(data, function(issue) {
+				return issue.id == issueID;
+			});
+			if (_.isUndefined(issueMatch)) {
+				// @TODO figure out to handle misses
+				callback(undefined, code);
+			} else {
+				callback(issueMatch, code);
+			}
+		}, errorCallback, debug);
 	}
 
 	Request(options, callback, errorCallback, debug = false) {
