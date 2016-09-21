@@ -2,7 +2,7 @@ var GHProjectManager = require('./index.js');
 
 // Test it by putting your info here
 // User PW
-var manager = new GHProjectManager('user', 'token');
+var manager = new GHProjectManager('johnmlee101-test', process.env.MY_SECRET_ENV);
 
 if (manager.credentials.username === 'user') {
 	console.log("Need to provide your own credentials!!!\n");
