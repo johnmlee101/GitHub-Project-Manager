@@ -1,11 +1,23 @@
 {
-  "name": "gh-project-manager",
+  "name": "github-project-manager",
   "version": "1.0.0",
   "description": "Manage your GH Projects!",
   "main": "index.js",
   "scripts": {
-    "test": "node testing"
+    "test": "npm install; node testing"
   },
   "author": "John Lee",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnmlee101/GitHub-Project-Manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/johnmlee101/GitHub-Project-Manager/issues"
+  },
+  "homepage": "https://github.com/johnmlee101/GitHub-Project-Manager#readme"
 }
