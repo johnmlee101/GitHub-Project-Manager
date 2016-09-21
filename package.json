@@ -1,0 +1,11 @@
+{
+  "name": "gh-project-manager",
+  "version": "1.0.0",
+  "description": "Manage your GH Projects!",
+  "main": "index.js",
+  "scripts": {
+    "test": "node testing && exit 0"
+  },
+  "author": "John Lee",
+  "license": "ISC"
+}
