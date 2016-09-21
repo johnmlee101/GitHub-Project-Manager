@@ -3,12 +3,14 @@ const _ = require('underscore');
 
 class GHProjectManager {
 
+	// @TODO The user/token logic will have to be replaced with oAuth tokens with an expiration
 	constructor(user, token) {
 		this.credentials = {
 			username: user,
 			token: token
 		};
 
+		// If this becomes a dedicated Integration we'll replace 'User-Agent' with the application name
 		var header = {
 			'Accept': 'application/vnd.github.inertia-preview+json',
 			'User-Agent': this.credentials.username
@@ -34,6 +36,14 @@ class GHProjectManager {
 	GetColumns(owner, repo, projectID, debug = false) {
 		var options = _.clone(this.defaultOptions);
 		options.path = '/repos/'+owner+'/'+repo+'/projects/' + projectID + '/columns';
+		options.method = 'GET';
+
+		this.Request(options, (r) => {console.log(r)}, () => {}, debug);
+	}
+
+	GetCards(owner, repo, columnID, debug = false) {
+		var options = _.clone(this.defaultOptions);
+		options.path = '/repos/'+owner+'/'+repo+'/projects/columns/'+columnID+'/cards';
 		options.method = 'GET';
 
 		this.Request(options, (r) => {console.log(r)}, () => {}, debug);

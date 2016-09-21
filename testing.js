@@ -10,14 +10,17 @@ if (manager.credentials.username === 'user') {
 }
 
 //Cache Testing
-manager.GetColumns('Expensify','Expensify',1, true);
-manager.GetProjects('Expensify','Expensify', true);
+/* manager.GetColumns('johnmlee101','GitHub-Project-Manager',1, true);
+manager.GetProjects('johnmlee101','GitHub-Project-Manager', true);
 setTimeout(() => {
-	manager.GetColumns('Expensify','Expensify',1, true);
+	manager.GetColumns('johnmlee101','GitHub-Project-Manager',1, true);
 	setTimeout(() => {
-		manager.GetProjects('Expensify','Expensify', true);
+		manager.GetProjects('johnmlee101','GitHub-Project-Manager', true);
 		setTimeout(() => {
 			console.log(manager.cache);
 		},2000);	
 	},2000);
-},2000);
+},2000); */
+
+// Card Testing
+//manager.GetCards('johnmlee101','GitHub-Project-Manager', 106445, true);
