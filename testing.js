@@ -34,4 +34,4 @@ setTimeout(() => {
 },2000);
 
 // Card Testing
-manager.GetCards('johnmlee101', 'GitHub-Project-Manager', 106445, true);
+manager.GetCards('johnmlee101', 'GitHub-Project-Manager', 106445, callback, errorCallback, true);
