@@ -163,6 +163,32 @@ class GHProjectManager {
 	 }
 
 	/*
+	 * Moves a card over to the specified Column
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number cardID
+	 * @param number columnID
+	 * @param string position [can be top, bottom, or after:<card-id>]
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 MoveCard(owner, repo, cardID, columnID, position="top", debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = `/repos/${owner}/${repo}/projects/columns/cards/${cardID}/moves`;
+	 	options.method = 'POST';
+	 	options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+
+	 	var payload = {
+	 		position,
+	 		column_id: columnID
+	 	};
+
+	 	payload = JSON.stringify(payload);
+	 	options.headers["Content-Length"] = Buffer.byteLength(payload);
+	 	return this.Request(options, debug, payload);
+	 }
+
+	/*
 	 * Makes the web API request to GitHub with the given parameters.
 	 *
 	 * @param object options
