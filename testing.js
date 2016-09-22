@@ -59,7 +59,7 @@ function testCache(resolve, reject) {
 function testCards(resolve, reject) {
 	const context = "[testCards]";
 	manager.ClearCache();
-	manager.GetCards(repoOwner, 'GitHub-Project-Manager', 106445, false)
+	manager.GetCards(repoOwner, repo, 106445, false)
 	.then(
 		(data) => {
 			AssertCodeCallback(data, 200, context);
