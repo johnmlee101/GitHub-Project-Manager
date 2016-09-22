@@ -137,12 +137,38 @@ class GHProjectManager {
 	 }
 
 	/*
+	 * Moves a card over to the specified Column
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number cardID
+	 * @param number columnID
+	 * @param string position [can be top, bottom, or after:<card-id>]
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 MoveCard(owner, repo, cardID, columnID, position="top", debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = `/repos/${owner}/${repo}/projects/columns/cards/${cardID}/moves`;
+	 	options.method = 'POST';
+	 	options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+
+	 	var payload = {
+	 		position,
+	 		column_id: columnID
+	 	};
+
+	 	payload = JSON.stringify(payload);
+	 	options.headers["Content-Length"] = Buffer.byteLength(payload);
+	 	return this.Request(options, debug, payload);
+	 }
+
+	/*
 	 * Makes the web API request to GitHub with the given parameters.
 	 *
 	 * @param object options
 	 * @param boolean (optional) debug Display extra data?
 	 */
-	 Request(options, debug = false) {
+	 Request(options, debug = false, payload = {}) {
 	 	return new Promise((resolve, reject) => {
 	 		if (!_.isUndefined(this.cache[options.path])) {
 	 			options.headers['If-None-Match'] = this.cache[options.path].etag;
@@ -155,8 +181,8 @@ class GHProjectManager {
 	 				console.log('headers:',res.headers);			
 	 			}
 
-	 			if (res.statusCode == 401) {
-	 				reject({statusCode: res.statusCode});
+	 			if (res.statusCode == 401 || res.statusCode == 422) {
+	 				reject({header: res.headers, statusCode: res.statusCode});
 	 			}
 
 	 			res.on('data', (d) => {
@@ -187,6 +213,9 @@ class GHProjectManager {
 					}
 				});
 	 		});
+	 		if (options.method == 'POST') {
+	 			req.write(payload);
+	 		}
 	 		req.end();
 	 	});
 	 }
