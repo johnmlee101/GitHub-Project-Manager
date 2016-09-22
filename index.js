@@ -17,117 +17,182 @@ class GHProjectManager {
 			'User-Agent': this.credentials.username
 		};
 
+		// Options that should be consistent every time (other than the credentials).
 		this.defaultOptions = {
 			host: 'api.github.com',
 			headers: header,
 			auth: this.credentials.username + ":" + this.credentials.token
 		};
 
+		// Initialize cache object to be empty.
+		// @TODO eventually save and load this from memory.
 		this.cache = {};
 	}
 
-	GetProjects(owner, repo, callback, errorCallback, debug = false) {
-		var options = _.clone(this.defaultOptions);
-		options.path = '/repos/'+owner+'/'+repo+'/projects';
-		options.method = 'GET';
+	/*
+	 * Gets the list of projects associated with the given owner and repo.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetProjects(owner, repo, debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = '/repos/'+owner+'/'+repo+'/projects';
+	 	options.method = 'GET';
 
-		this.Request(options, callback, errorCallback, debug);		
-	}
+	 	return this.Request(options, debug);		
+	 }
 
-	GetColumns(owner, repo, projectID, callback, errorCallback, debug = false) {
-		var options = _.clone(this.defaultOptions);
-		options.path = '/repos/'+owner+'/'+repo+'/projects/' + projectID + '/columns';
-		options.method = 'GET';
+	/*
+	 * Gets the list of columns associated with the given owner, repo, and projectID.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number projectID ID associated with the column
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetColumns(owner, repo, projectID, debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = '/repos/'+owner+'/'+repo+'/projects/' + projectID + '/columns';
+	 	options.method = 'GET';
 
-		this.Request(options, callback, errorCallback, debug);
-	}
+	 	return this.Request(options, debug);
+	 }
 
-	GetCards(owner, repo, columnID, callback, errorCallback, debug = false) {
-		var options = _.clone(this.defaultOptions);
-		options.path = '/repos/'+owner+'/'+repo+'/projects/columns/'+columnID+'/cards';
-		options.method = 'GET';
+	 ClearCache() {
+	 	this.cache = {};
+	 }
 
-		this.Request(options, callback, errorCallback, debug);
-	}
+	/*
+	 * Gets the list of cards associated with the given owner, repo, and columnID.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number columnID ID associated with the cards
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetCards(owner, repo, columnID, debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = '/repos/'+owner+'/'+repo+'/projects/columns/'+columnID+'/cards';
+	 	options.method = 'GET';
 
-	GetIssues(owner, repo, callback, errorCallback, debug = false) {
-		var options = _.clone(this.defaultOptions);
-		options.path = '/repos/'+owner+'/'+repo+'/issues';
-		options.method = 'GET';
+	 	return this.Request(options, debug);
+	 }
 
-		this.Request(options, callback, errorCallback, debug);
-	}
+	/*
+	 * Gets the list of issues associated with the given owner and repo.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetIssues(owner, repo, debug = false) {
+	 	var options = JSON.parse(JSON.stringify(this.defaultOptions));
+	 	options.path = '/repos/'+owner+'/'+repo+'/issues';
+	 	options.method = 'GET';
 
-	GetLabels(owner, repo, issueID, callback, errorCallback, debug = false) {
-		this.GetIssue(owner, repo, issueID, (issue, code) => {
-			callback(issue.labels, code);
-		}, errorCallback, debug)
-	}
+	 	return this.Request(options, debug);
+	 }
 
-	GetIssue(owner, repo, issueID, callback, errorCallback, debug = false) {
-		this.GetIssues(owner, repo, (data, code) => {
-			let issueMatch = _.find(data, function(issue) {
-				return issue.id == issueID;
-			});
-			if (_.isUndefined(issueMatch)) {
-				// @TODO figure out to handle misses
-				callback(undefined, code);
-			} else {
-				callback(issueMatch, code);
-			}
-		}, errorCallback, debug);
-	}
+	/*
+	 * Gets the list of labels associated with the given owner, repo, and issueID.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number issueID
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetLabels(owner, repo, issueID, debug = false) {
+	 	return new Promise((resolve, reject) => {
+	 		this.GetIssue(owner, repo, issueID, debug).then(
+	 			(data) => {
+	 				data.response = data.response.labels;
+	 				resolve(data);
+	 			});		
+	 	})
+	 }
 
-	Request(options, callback, errorCallback, debug = false) {
-		if (!_.isUndefined(this.cache[options.path])) {
-			options.headers['If-None-Match'] = this.cache[options.path].etag;
-		}
+	/*
+	 * Gets the issue associated with the given owner, repo, and issueID.
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number issueID
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 GetIssue(owner, repo, issueID, debug = false) {
+	 	return new Promise((resolve, reject) => {
+	 		this.GetIssues(owner, repo, debug).then(
+	 			(data) => {
+	 				let issueMatch = _.find(data.response, function(issue) {
+	 					return issue.id == issueID;
+	 				});
+	 				data.response = issueMatch;
 
-		var req = https.request(options, (res) => {
-			let response = '';
-			if (debug) {
-				console.log('status:',res.statusCode);
-				console.log('headers:',res.headers);			
-			}
+	 			// Maybe reject if there is no good data... 
+	 			resolve(data);
+	 		});
+	 	});
+	 }
 
-			if (res.statusCode == 401) {
-				errorCallback(null, res.statusCode);
-			}
+	/*
+	 * Makes the web API request to GitHub with the given parameters.
+	 *
+	 * @param object options
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	 Request(options, debug = false) {
+	 	return new Promise((resolve, reject) => {
+	 		if (!_.isUndefined(this.cache[options.path])) {
+	 			options.headers['If-None-Match'] = this.cache[options.path].etag;
+	 		}
 
-			res.on('data', (d) => {
-				response += d;
-			});
+	 		var req = https.request(options, (res) => {
+	 			let response = '';
+	 			if (debug) {
+	 				console.log('status:',res.statusCode);
+	 				console.log('headers:',res.headers);			
+	 			}
 
-			req.on('error', (e) => {
-				if (debug) {
-					console.error(e);
-				}
-				errorCallback(e, res.statusCode);
-			});
+	 			if (res.statusCode == 401) {
+	 				reject({statusCode: res.statusCode});
+	 			}
 
-			res.on('end', () => {
-				var key = options.path;
+	 			res.on('data', (d) => {
+	 				response += d;
+	 			});
 
-				// @TODO Put this into it's own function, possibly make the cache itself its own object.
-				// Mainly since caches should only work with GET requests, nothing else.
-				if (res.statusCode == 200) {
-					var formattedResponse = JSON.parse(response);
-					var etag = res.headers.etag;
-					this.cache[key] = {
-						etag: etag,
-						value: formattedResponse
+	 			req.on('error', (e) => {
+	 				if (debug) {
+	 					console.error(e);
+	 				}
+	 				reject({error: e, statusCode: res.statusCode});
+	 			});
+
+	 			res.on('end', () => {
+	 				var key = options.path;
+					// @TODO Put this into it's own function, possibly make the cache itself its own object.
+					// Mainly since caches should only work with GET requests, nothing else.
+					if (res.statusCode == 200) {
+						var formattedResponse = JSON.parse(response);
+						var etag = res.headers.etag;
+						this.cache[key] = {
+							etag: etag,
+							value: formattedResponse
+						}
+						resolve({response: formattedResponse, statusCode: res.statusCode});				
+					} else if (res.statusCode == 304) {
+						resolve({response: this.cache[key].value, statusCode: res.statusCode});
 					}
-					callback(formattedResponse, res.statusCode);				
-				} else if (res.statusCode == 304) {
-					callback(this.cache[key].value, res.statusCode);
-				}
-			});
-		});
-		req.end();
+				});
+	 		});
+	 		req.end();
+	 	});
+	 }
 	}
-}
 
 
 
-
+// Export this class as our package
 module.exports = GHProjectManager;
