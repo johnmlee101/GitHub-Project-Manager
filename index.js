@@ -141,7 +141,7 @@ class GHProjectManager {
 	 *
 	 * @param string owner Owner username
 	 * @param string repo Repository name
-	 * @param number issueID
+	 * @param number cardID
 	 * @param number columnID
 	 * @param string position [can be top, bottom, or after:<card-id>]
 	 * @param boolean (optional) debug Display extra data?
@@ -213,7 +213,9 @@ class GHProjectManager {
 					}
 				});
 	 		});
-	 		if (options.method == 'POST') req.write(payload);
+	 		if (options.method == 'POST') {
+	 			req.write(payload);
+	 		}
 	 		req.end();
 	 	});
 	 }
