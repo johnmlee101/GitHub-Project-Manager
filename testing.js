@@ -7,7 +7,7 @@ const repo = 'GitHub-Project-Manager'
 // User PW
 var manager = new GHProjectManager('johnmlee101-test', process.env.MY_SECRET_ENV)
 
-function AssertCodeCallback (data, code, context = '') {
+function AssertCodeCallback(data, code, context = '') {
 	context += ' [Code]'
 	if (data.statusCode !== code) {
 		console.log(`[ASSERT] ${context} Assert failed! ${data.statusCode} != ${code}`)
@@ -17,7 +17,7 @@ function AssertCodeCallback (data, code, context = '') {
 	}
 }
 
-function AssertCountCallback (data, count, context = '') {
+function AssertCountCallback(data, count, context = '') {
 	context += ' [Count]'
 	if (data.response.length !== count) {
 		console.log(`[ASSERT] ${context} Assert failed! Wanted ${data.response.length} size but got ${count}`)
@@ -28,7 +28,7 @@ function AssertCountCallback (data, count, context = '') {
 }
 
 // Cache Testing
-function testCache (resolve, reject) {
+function testCache(resolve, reject) {
 	const context = '[testCache]'
 	manager.ClearCache()
 	manager.GetColumns(repoOwner, repo, 1, false)
@@ -45,7 +45,7 @@ function testCache (resolve, reject) {
 }
 
 // Card Testing
-function testCards (resolve, reject) {
+function testCards(resolve, reject) {
 	const context = '[testCards]'
 	manager.ClearCache()
 	manager.GetCards(repoOwner, repo, 106445, false)
@@ -56,7 +56,7 @@ function testCards (resolve, reject) {
 		})
 }
 
-function testProjects (resolve, reject) {
+function testProjects(resolve, reject) {
 	const context = '[testProjects]'
 	manager.ClearCache()
 	manager.GetProjects(repoOwner, repo, false)
@@ -67,7 +67,7 @@ function testProjects (resolve, reject) {
 		})
 }
 
-function testColumns (resolve, reject) {
+function testColumns(resolve, reject) {
 	const context = '[testColumns]'
 	manager.ClearCache()
 	manager.GetColumns(repoOwner, repo, 1, false)
@@ -78,7 +78,7 @@ function testColumns (resolve, reject) {
 		})
 }
 
-function testIssue (resolve, reject) {
+function testIssue(resolve, reject) {
 	const context = '[testIssue]'
 	manager.ClearCache()
 	manager.GetIssue(repoOwner, repo, 178260045, false)
@@ -90,7 +90,7 @@ function testIssue (resolve, reject) {
 }
 
 // Issue Testing
-function testIssues (resolve, reject) {
+function testIssues(resolve, reject) {
 	manager.ClearCache()
 	const context = '[testIssues]'
 	manager.GetIssues(repoOwner, repo, false)
@@ -102,7 +102,7 @@ function testIssues (resolve, reject) {
 }
 
 // Label Testing
-function testLabels (resolve, reject) {
+function testLabels(resolve, reject) {
 	const context = '[testLabels]'
 	manager.GetLabels(repoOwner, repo, 178260045, false)
 	.then(
@@ -113,6 +113,28 @@ function testLabels (resolve, reject) {
 		})
 }
 
+// Testing with cards
+function testCardManipulation(resolve, reject) {
+	const context = '[test Card-Create-Move-Delete]'
+	manager.GetColumns(repoOwner, repo, 1)
+	.then((columns) => {
+		AssertCodeCallback(columns, 200, context + ' GetColumns')
+		manager.CreateCard(repoOwner, repo, columns.response[0].id, 'THIS IS A TEST')
+		.then((card) => {
+			AssertCodeCallback(card, 201, context + ' CreateCard')
+			manager.MoveCard(repoOwner, repo, card.response.id, columns.response[1].id)
+			.then((move) => {
+				AssertCodeCallback(move, 201, context + ' MoveCard')
+				manager.DeleteCard(repoOwner, repo, card.response.id)
+				.then((deletion) => {
+					AssertCodeCallback(deletion, 204, context + ' DeleteCard')
+					resolve()
+				})
+			})
+		})
+	})
+}
+
 var tests = []
 tests.push(testCards)
 tests.push(testColumns)
@@ -121,8 +143,9 @@ tests.push(testIssues)
 tests.push(testIssue)
 tests.push(testLabels)
 tests.push(testCache)
+tests.push(testCardManipulation)
 
-function testNext () {
+function testNext() {
 	var next = tests.pop()
 	if (_.isUndefined(next)) {
 		return
