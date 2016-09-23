@@ -137,6 +137,42 @@ class GHProjectManager {
 	 }
 
 	/*
+	 * Creates a card at the specified column
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number columnID
+	 * @param number|string contentID issue or PR to associate with the card
+	 * @param string contentType "Issue" or "PullRequest"
+	 * @param boolean (optional) debug Display extra data?
+	 *
+	 * Return codes
+	 * 200 - success
+	 */
+	CreateCard (owner, repo, columnID, contentID, contentType = '', debug = false) {
+		var options = JSON.parse(JSON.stringify(this.defaultOptions))
+		options.path = `/repos/${owner}/${repo}/projects/columns/${columnID}/cards`
+		options.method = 'POST'
+		options.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+		var payload
+		if (typeof (contentID) !== 'number') {
+			payload = {
+				note: contentID
+			}
+		} else {
+			payload = {
+				content_id: contentID,
+				content_type: contentType
+			}
+		}
+
+		payload = JSON.stringify(payload)
+		options.headers['Content-Length'] = Buffer.byteLength(payload)
+		return this.Request(options, debug, payload)
+	 }
+
+	/*
 	 * Moves a card over to the specified Column
 	 *
 	 * @param string owner Owner username
@@ -163,6 +199,22 @@ class GHProjectManager {
 	 }
 
 	/*
+	 * Deletes a specified card
+	 *
+	 * @param string owner Owner username
+	 * @param string repo Repository name
+	 * @param number cardID
+	 * @param boolean (optional) debug Display extra data?
+	 */
+	DeleteCard (owner, repo, cardID, debug = false) {
+		var options = JSON.parse(JSON.stringify(this.defaultOptions))
+		options.path = `/repos/${owner}/${repo}/projects/columns/cards/${cardID}`
+		options.method = 'DELETE'
+
+		return this.Request(options, debug)
+	}
+
+	/*
 	 * Makes the web API request to GitHub with the given parameters.
 	 *
 	 * @param object options
@@ -185,6 +237,14 @@ class GHProjectManager {
 					reject({header: res.headers, statusCode: res.statusCode})
 				}
 
+				if (options.method === 'DELETE') {
+					if (res.statusCode === 204) {
+						resolve({response: {}, statusCode: res.statusCode})
+					} else {
+						reject({header: res.headers, statusCode: res.statusCode})
+					}
+				}
+
 				res.on('data', (d) => {
 					response += d
 				})
@@ -198,18 +258,25 @@ class GHProjectManager {
 
 				res.on('end', () => {
 					var key = options.path
+					var formattedResponse = {}
 					// @TODO Put this into it's own function, possibly make the cache itself its own object.
 					// Mainly since caches should only work with GET requests, nothing else.
 					if (res.statusCode === 200) {
-						var formattedResponse = JSON.parse(response)
+						// Successful get
 						var etag = res.headers.etag
+						formattedResponse = JSON.parse(response)
 						this.cache[key] = {
 							etag: etag,
 							value: formattedResponse
 						}
 						resolve({response: formattedResponse, statusCode: res.statusCode})
 					} else if (res.statusCode === 304) {
+						// No change
 						resolve({response: this.cache[key].value, statusCode: res.statusCode})
+					} else if (res.statusCode === 201) {
+						// For creation
+						formattedResponse = JSON.parse(response)
+						resolve({response: formattedResponse, statusCode: res.statusCode})
 					}
 				})
 			})

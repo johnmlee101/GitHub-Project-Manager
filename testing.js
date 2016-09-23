@@ -113,6 +113,28 @@ function testLabels (resolve, reject) {
 		})
 }
 
+// Testing with cards
+function testCardManipulation (resolve, reject) {
+	const context = '[test Card-Create-Move-Delete]'
+	manager.GetColumns(repoOwner, repo, 1)
+	.then((columns) => {
+		AssertCodeCallback(columns, 200, context + ' GetColumns')
+		manager.CreateCard(repoOwner, repo, columns.response[0].id, 'THIS IS A TEST')
+		.then((card) => {
+			AssertCodeCallback(card, 201, context + ' CreateCard')
+			manager.MoveCard(repoOwner, repo, card.response.id, columns.response[1].id)
+			.then((move) => {
+				AssertCodeCallback(move, 201, context + ' MoveCard')
+				manager.DeleteCard(repoOwner, repo, card.response.id)
+				.then((deletion) => {
+					AssertCodeCallback(deletion, 204, context + ' DeleteCard')
+					resolve()
+				})
+			})
+		})
+	})
+}
+
 var tests = []
 tests.push(testCards)
 tests.push(testColumns)
@@ -121,6 +143,7 @@ tests.push(testIssues)
 tests.push(testIssue)
 tests.push(testLabels)
 tests.push(testCache)
+tests.push(testCardManipulation)
 
 function testNext () {
 	var next = tests.pop()
